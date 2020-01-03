@@ -148,8 +148,8 @@ def em_algorithm(seed_val, samples, num_clusters, max_num_iter=100):
     # N_node = samples.shape[1]  # number of nodes
     # I_qk = np.zeros((K, N_node - 1))
     I_qk = []
-    N=5
-    K=1
+    # N = samples.shape[0]
+    # K =
 
     for k in range(K):
 
@@ -160,7 +160,11 @@ def em_algorithm(seed_val, samples, num_clusters, max_num_iter=100):
             visit_list = visit_list[1:] + cur_node.descendants
             #each node
             for child in cur_node.descendants:
-                t= int(child.name)
+                t = int(child.name)
+                q_ab = 0
+                q_a = 0
+                q_b = 0
+                result = 0
                 #each edge pattern(00,01,10,11)
                 for i in range(2):
                     for j in range(2):
@@ -178,43 +182,17 @@ def em_algorithm(seed_val, samples, num_clusters, max_num_iter=100):
                                 q_aNumerator += r[n][k]
                             elif samples[n][t] == j:
                                 q_bNumerator += r[n][k]
-                            # q_ab = q_abNumerator / q_ab_denominator
-                        # print("i",i,"j",j,"分子",q_abNumerator,"qab",q_abNumerator/q_ab_denominator)
-                        q_ab=q_abNumerator/q_ab_denominator
-                        print("s",s,"-","t",t,":","i",i,"j",j,"权重",q_ab)
-            #
-            # q_ab_denominator = 0
-            # for n in range(N):
-            #     q_ab_denominator += r[n][k]
-            #
-            # for child in cur_node.descendants:
-            #     t = int(child.name)
-            #     for i in range(2):
-            #         for j in range(2):
-            #             q_abNumerator = 0  # q^k(X_s=a,X_t=b)
-            #             q_aNumerator = 0  # q^k(X_s=a)
-            #             q_bNumerator = 0  # q^k(X_t=b)
-            #             for n in range(N):
-            #                 if samples[n][s] == i and samples[n][t] == j:
-            #                     q_abNumerator += r[n][k]
-            #             # print("边：", s, "-", t)
-            #             # print("权重", q_abNumerator/q_ab_denominator)
-            #                 elif samples[n][s] == i:
-            #                     q_aNumerator += r[n][k]
-            #     # print("q_a", q_aNumerator)
-            #                 elif samples[n][t] == j:
-            #                     q_bNumerator += r[n][k]
-            # # print("q_b", q_bNumerator)
-            #             q_ab = q_abNumerator / q_ab_denominator
-            #             q_a = np.sum(q_aNumerator) / q_ab_denominator
-            #             q_b = np.sum(q_bNumerator) / q_ab_denominator
-            #     edgeWeight = np.sum(q_ab * np.log(q_ab/(q_a * q_b)))
-            #     print(edgeWeight)
-        # for l in range(N_node - 1):
-        #     I_qk[k][l] = I_qk.append([s, t, edgeWeight])
-
-    # print("edge weight of each tree")
-    # print(I_qk)
+                            q_ab += q_abNumerator
+                            q_a += q_aNumerator
+                            # q_a = q_a/q_ab_denominator
+                            q_b += q_bNumerator
+                            # q_b = q_b/q_ab_denominator
+                    q_ab = q_ab / q_ab_denominator
+                    q_a = q_a / q_ab_denominator
+                    q_b = q_b /q_ab_denominator
+                result += q_ab * np.log(q_ab / (q_a * q_b))
+                I_qk.append([s, t, result])
+    print(I_qk)
     topology_list = []
     theta_list = []
     for i in range(num_clusters):
