@@ -4,12 +4,14 @@
 # Author     : Yu Hu(hu3@kth.se)
 # Date       : 12 Jan 2020
 # ==================================================================
+import time as t
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.decomposition import PCA
 from sklearn.datasets import load_digits
+from sklearn.datasets import load_iris
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import KernelPCA
 from sklearn.preprocessing import StandardScaler
@@ -17,7 +19,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import (KNeighborsClassifier, NeighborhoodComponentsAnalysis)
 
 kernel = ['linear', 'rbf', 'poly']
-gamma = 0.01  # Kernel coefficient for rbf,poly kernels.Ignored by linear kernel.
+Gamma = 0.01  # Kernel coefficient for rbf,poly kernels.Ignored by linear kernel.
 
 
 def fetchData(url, names, target, features):
@@ -34,21 +36,25 @@ def fetchData(url, names, target, features):
 # fit_transform(): fit to data, then transform it
 def Iris():
     """Iris dataset: 4 features, 3 classes of targets"""
-    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
-    names = ['sepal length', 'sepal width', 'petal length', 'petal width',
-             'target']  # List of column names of CSV file to use.
-    features = ['sepal length', 'sepal width', 'petal length', 'petal width']
-    target = ['target']
+    # url = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+    # names = ['sepal length', 'sepal width', 'petal length', 'petal width',
+    #          'target']  # List of column names of CSV file to use.
 
-    T, Y = fetchData(url, names, target, features)
-    targets = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+    # features = ['sepal length', 'sepal width', 'petal length', 'petal width']
+    # target = ['target']
+
+    # T,Y = fetchData(url, names, target, features)
+    Iris = load_iris()
+    T = Iris.target
+    Y = Iris.data
+    targets = [0, 1, 2]
     colors = ['r', 'm', 'b']
 
     for i in range(3):
         # Reduce dimension to 2 with KernelPCA using different kernels
-        kpca = KernelPCA(kernel=kernel[i], fit_inverse_transform=True, gamma=gamma)
+        kpca = KernelPCA(kernel=kernel[i], fit_inverse_transform=True, gamma=Gamma)
         X_kpca = kpca.fit_transform(Y)
-        plot('Iris', T, targets, colors, X_kpca, gamma, i)
+        plot('Iris', T, targets, colors, X_kpca, Gamma, i)
 
 
 def Digits():
@@ -63,14 +69,14 @@ def Digits():
 
     for i in range(3):
         # Reduce dimension to 2 with KernelPCA using different kernels
-        kpca = KernelPCA(kernel=kernel[i], fit_inverse_transform=True, gamma=gamma)
+        kpca = KernelPCA(kernel=kernel[i], fit_inverse_transform=True, gamma=Gamma)
         X_kpca = kpca.fit_transform(Y)
-        plot('Digits', T, targets, colors, X_kpca, gamma, i)
+        plot('Digits', T, targets, colors, X_kpca, Gamma, i)
 
 
 def plot(dataset, T, targets, colors, X_kpca, gamma, i):
     """plot seperately the results of KPCA applying to Iris and Digits dataset using 3 kinds of kernels"""
-    plt.title("KPCA on {} Dataset using kernel : {},  gamma = {}".format(dataset, kernel[i], gamma))
+    plt.title("KPCA on {} with {}-kernel \ngamma = {}".format(dataset, kernel[i], gamma))
 
     for t, c in zip(targets, colors):
         index = np.where(T == t)[0]
@@ -110,7 +116,7 @@ def Evaluate():
                                 KernelPCA(n_components=2, kernel='linear', fit_inverse_transform=True))
     # Reduce dimension to 2 with KPCA-RBF kernel
     kpca_rbf = make_pipeline(StandardScaler(),
-                             KernelPCA(n_components=2, kernel='rbf', gamma=0.01, fit_inverse_transform=True))
+                             KernelPCA(n_components=2, kernel='rbf', gamma=Gamma, fit_inverse_transform=True))
 
     # Use a nearest neighbor classifier to evaluate the methods
     KNN = KNeighborsClassifier(n_neighbors=n_neighbors)
@@ -123,7 +129,7 @@ def Evaluate():
 
         # Fit the model of the method
         model.fit(Y_train, T_train)
-
+        s = t.time()
         # Fit a nearest neighbor classifier on the embedded training set
         KNN.fit(model.transform(Y_train), T_train)
 
@@ -132,16 +138,15 @@ def Evaluate():
 
         # Embed the data set in 2 dimensions using the fitted model
         Y_embedded = model.transform(Y)
-
+        e = t.time()
         # Plot the projected points and show the evaluation score
-        plt.title("{}, KNN (k={})\nTest accuracy = {:.2f}".format(name, n_neighbors, accuracy_KNN))
+        plt.title("{}, KNN (k={})\nTest accuracy = {:.2f} \nExecution Time: {}".format(name, n_neighbors, accuracy_KNN,
+                                                                                       e - s))
         plt.scatter(Y_embedded[:, 0], Y_embedded[:, 1], c=T, s=30, cmap='Set1')
 
     plt.show()
 
-
 if __name__ == "__main__":
-    Digits()
-    Iris()
-    Evaluate()
-
+  Digits()
+  Iris()
+  Evaluate()
